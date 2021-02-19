@@ -7,15 +7,19 @@ import math
 #read csv file from command line
 data = pd.read_csv(sys.argv[1])
 data = data.drop(columns=['additional_information', 'source'])
+
 #print(data)
 #fixing the various age formats
 def fixAge(age):
     #pattern to match if age is between a range
     range_pat = "(\d+)-(\d+)"
+
     #pattern to match if range is float or int
     single_pat = "(\d+)"
+
     #pattern to match months
     month_pat = "(\d+) month"
+
     #create regex patterns
     pat1 = re.compile(range_pat)
     pat2 = re.compile(single_pat)
@@ -25,11 +29,13 @@ def fixAge(age):
     result1 = pat1.match(age)
     result2 = pat2.match(age)
     result3 = pat3.match(age)
+
     #if age is a range value, return the average
     if result1:
         i = int(result1.group(1))
         j = int(result1.group(2))
         return math.ceil((i+j)//2)
+
     #if age is float/int, return int
     if result2:
         #if age is in months, consider them 1 years old
@@ -40,21 +46,27 @@ def fixAge(age):
 
 #copy only the age and outcome attributes of original data
 temp = data.filter(['age','outcome'])
-print(temp)
+#print(temp)
+
 #drop all NaN age values
 temp = temp.dropna()
-print(temp)
+#print(temp)
+
 #fix the ages
 temp['age'] = temp['age'].apply(fixAge)
-print(temp)
+#print(temp)
+
+#get the indices of all fixed ages
 indices = temp.index.values.tolist()
-print(len(indices))
+#print(len(indices))
 
+#map the fixed ages to the original data set
 data.loc[indices,'age'] = temp['age']
+#print(data)
 
-print(data)
+#group by outcome and compute the rounded average of each outcome and replace appropriate null values in age
 data["age"] = data.groupby("outcome").transform(lambda x: x.fillna(math.ceil(x.mean())))
-print(data)
+#print(data)
 
 '''
 #group by outcome and calculate the average age for each outcome

@@ -7,7 +7,7 @@ import math
 #read csv file from command line
 data = pd.read_csv(sys.argv[1])
 data = data.drop(columns=['additional_information', 'source'])
-print(data)
+#print(data)
 #fixing the various age formats
 def fixAge(age):
     #pattern to match if age is between a range
@@ -40,31 +40,27 @@ def fixAge(age):
 
 #copy only the age and outcome attributes of original data
 temp = data.filter(['age','outcome'])
+print(temp)
 #drop all NaN age values
 temp = temp.dropna()
+print(temp)
 #fix the ages
 temp['age'] = temp['age'].apply(fixAge)
+print(temp)
+indices = temp.index.values.tolist()
+print(len(indices))
+
+data.loc[indices,'age'] = temp['age']
+
+print(data)
+data["age"] = data.groupby("outcome").transform(lambda x: x.fillna(math.ceil(x.mean())))
+print(data)
+
+'''
 #group by outcome and calculate the average age for each outcome
 temp = temp.groupby(['outcome']).mean()
 #use celing function to make age a whole number
 temp['age'] = temp['age'].apply(math.ceil)
 #get age averages and store them in list
 categoryAges = temp['age'].tolist()
-print(temp)
-print(categoryAges)
-
-'''
-data.loc[data.outcome == 'deceased', 'age'] = categoryAges[0]
-data.loc[data.outcome == 'hospitalized', 'age'] = categoryAges[1]
-data.loc[data.outcome == 'nonhospitalized', 'age'] = categoryAges[2]
-
-#data.loc[data.outcome == 'recovered', 'age'] = categoryAges[3]
-#data['age'] = np.where((not math.isnan(data['age'])) & (data['outcome'] == 'recovered') , categoryAges[3], data['age'])
-print(data)
-
-print(not isinstance(data['age'][367635], str))
-
-def imputeAge(age):
-    if not isinstance(age,str):
-        if math.isnan(age) and 
 '''

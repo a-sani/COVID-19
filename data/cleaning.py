@@ -38,3 +38,19 @@ def fixAge(age):
         else:
             return int(result2.group(1))
 
+#copy only the age and outcome attributes of original data
+temp = data.filter(['age','outcome'])
+#drop all NaN age values
+temp = temp.dropna()
+#fix the ages
+temp['age'] = temp['age'].apply(fixAge)
+#group by outcome and calculate the average age for each outcome
+temp = temp.groupby(['outcome']).mean()
+#use celing function to make age a whole number
+temp['age'] = temp['age'].apply(math.ceil)
+#get age averages and store them in list
+categoryAges = temp['age'].tolist()
+
+
+
+

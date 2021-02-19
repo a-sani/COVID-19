@@ -6,7 +6,7 @@ import math
 
 #read csv file from command line
 data = pd.read_csv(sys.argv[1])
-data.drop(columns=['additional-information', 'source'])
+data = data.drop(columns=['additional_information', 'source'])
 
 #fixing the various age formats
 def fixAge(age):
@@ -37,5 +37,4 @@ def fixAge(age):
             return 1
         else:
             return int(result2.group(1))
-
 

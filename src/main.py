@@ -109,18 +109,25 @@ def convert_time(df, time_column):
 def imputation(data): # Function to clean and imput the dataset
     ### Fixing Age Attribute
     #copy only the age and outcome attributes of original data
-    temp = data.filter(['age','outcome'])
-    temp = temp.dropna() #drop all NaN age values
-    temp['age'] = temp['age'].apply(fixAge) #fix the ages
+    # temp = data.filter(['age','outcome'])
+    # temp = temp.dropna() #drop all NaN age values
+    # temp['age'] = temp['age'].apply(fixAge) #fix the ages
 
-    #get the indices of all fixed ages
-    indices = temp.index.values.tolist()
+    # #get the indices of all fixed ages
+    # indices = temp.index.values.tolist()
     
-    #map the fixed ages to the original data set
-    data.loc[indices,'age'] = temp['age']
+    # #map the fixed ages to the original data set
+    # data.loc[indices,'age'] = temp['age']
 
-    #group by outcome and compute the rounded average of each outcome and replace appropriate null values in age
-    data["age"] = data.groupby("outcome").transform(lambda x: x.fillna(math.ceil(x.mean())))
+    # #group by outcome and compute the rounded average of each outcome and replace appropriate null values in age
+    # data["age"] = data.groupby("outcome").transform(lambda x: x.fillna(math.ceil(x.mean())))
+
+    data['age'] = data['age'].dropna()
+    data['age'] = data['age'].apply(fixAge) #fix the ages
+
+    data["age"] = data["age"].fillna(data["age"].mean())
+
+    print(data)
 
     ### Replaces missing values in sex, date, source, and additional info
     data = replace_missing_values(data) 
@@ -258,7 +265,7 @@ def main():
     location = pd.read_csv('../data/location.csv')
 
     ###### IMPUTING AND CLEANING "TRAINING" DATA #####
-    new_train, outcome = imputation(train)
+    new_train = imputation(train)
     new_train.to_csv('../results/cases_train_processed.csv')
 
     new_test = imputation(test)

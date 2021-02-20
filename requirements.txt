@@ -4,5 +4,6 @@ re
 statistics
 pandas
 geopandas
-descartes
 seaborn
+geopy
+math

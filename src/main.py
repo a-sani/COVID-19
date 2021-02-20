@@ -21,8 +21,6 @@ def replace_missing_values(df):
     df["date_confirmation"].fillna("20.09.2020", inplace = True) 
     df[["additional_information", "source"]] = df[["additional_information", "source"]].notnull().astype(int)
 
-    #df["latitude"].fillna( , inplace = True)
-
     return df
 
 
@@ -58,19 +56,20 @@ def fixAge(age):
 
 
 def imputing_province(latitude,longitude):
+    '''
+    Imputing the province and country names according to their latitude and longitude values
+    Reference:
+    https://www.geeksforgeeks.org/get-the-city-state-and-country-names-from-latitude-and-longitude-using-python/
+    '''
     # initialize Nominatim API  
     geolocator = Nominatim(user_agent="geoapiExercises")
     location = geolocator.reverse(str(latitude) + "," + str(longitude), language = 'en', timeout=None) 
     if location is None:
         return None, None
-    #print(location)
     address = location.raw['address'] 
-    # print(address)
 
     state = address.get('state', '') 
     country = address.get('country', '') 
-    # print('State : ', state) 
-    # print('Country : ', country) 
     return state,country
 
 
@@ -109,50 +108,36 @@ def convert_time(df, time_column):
 def imputation(data): # Function to clean and imput the dataset
     ### Fixing Age Attribute
     #copy only the age and outcome attributes of original data
-    # temp = data.filter(['age','outcome'])
-    # temp = temp.dropna() #drop all NaN age values
-    # temp['age'] = temp['age'].apply(fixAge) #fix the ages
+    temp = data["age"].dropna() #drop all NaN age values
+    data['age'] = temp.apply(fixAge) #fix the ages
 
-    # #get the indices of all fixed ages
-    # indices = temp.index.values.tolist()
-    
-    # #map the fixed ages to the original data set
-    # data.loc[indices,'age'] = temp['age']
-
-    # #group by outcome and compute the rounded average of each outcome and replace appropriate null values in age
-    # data["age"] = data.groupby("outcome").transform(lambda x: x.fillna(math.ceil(x.mean())))
-
-    data['age'] = data['age'].dropna()
-    data['age'] = data['age'].apply(fixAge) #fix the ages
-
-    data["age"] = data["age"].fillna(data["age"].mean())
-
+    age_mean = round(data["age"].mean())
+    data["age"].fillna(float(age_mean), inplace = True)
     print(data)
 
     ### Replaces missing values in sex, date, source, and additional info
     data = replace_missing_values(data) 
 
-    # print(data.head())
 
     ### Imputing Missing values in Province and Country attributes
     data = data[data["latitude"].notnull()]
 
-    # print(data.iloc[3789])
 
     for index, row in data.iterrows():
         #print(row['province'], row['country'])
-        if (pd.isnull(row['province'])):
-            # print(row)
-            # print(type(row['latitude']))
-            province, country = imputing_province(row['latitude'],row['longitude'])
-            if province is None:
-                data.loc[index,'province'] = "Unknown"
-            elif len(province) == 0:
-                data.loc[index,'province'] = "Unknown"
-            else:
-                data.loc[index,'province'] = province
-            if (pd.isnull(row['country'])):
-                if len(country) == 0 or province is None:
+        if (pd.isnull(row['province']) or pd.isnull(row['country'])): #checks if province or country is Null
+            province, country = imputing_province(row['latitude'],row['longitude']) #does imputation
+            if (pd.isnull(row['province'])): #if its province that's null
+                if province is None: 
+                    data.loc[index,'province'] = "Unknown"
+                elif len(province) == 0:
+                    data.loc[index,'province'] = "Unknown"
+                else:
+                    data.loc[index,'province'] = province
+            if (pd.isnull(row['country'])): # if country is Null
+                if len(country) == 0:
+                    data.loc[index,'country'] = "Unknown"
+                elif country is None:
                     data.loc[index,'country'] = "Unknown"
                 else:
                     data.loc[index,'country'] = country
@@ -233,20 +218,28 @@ def transform(data):
     del data["Case-Fatality_Ratio"]
     del data["Active"]
 
+    ### Only running the latitude and longitude that are not null
+    data = data[data["Lat"].notnull()]
+
     for index, row in data.iterrows():
-        if (pd.isnull(row['province'])): # if province is NaN
-            province, country = imputing_province(row['latitude'],row['longitude'])
-            if province is None:
-                data.loc[index,'province'] = "Unknown"
-            elif len(province) == 0:
-                data.loc[index,'province'] = "Unknown"
-            else:
-                data.loc[index,'province'] = province
-            if (pd.isnull(row['country'])):
-                if len(country) == 0 or province is None:
-                    data.loc[index,'country'] = "Unknown"
+        #print(row['province'], row['country'])
+        if (pd.isnull(row['Province_State']) or pd.isnull(row['Country_Region'])): #checks if province or country is Null
+            province, country = imputing_province(row['Lat'],row['Long_']) #does imputation
+            if (pd.isnull(row['Province_State'])): #if its province that's null
+                if province is None: # if latitude and longitude is not valid
+                    data.loc[index,'Province_State'] = "Unknown"
+                elif len(province) == 0: # if province is empty
+                    data.loc[index,'Province_State'] = "Unknown"
+                else: # if it returns a valid province
+                    data.loc[index,'Province_State'] = province
+            if (pd.isnull(row['Country_Region'])): # if country is Null
+                if len(country) == 0:
+                    data.loc[index,'Country_Region'] = "Unknown"
+                elif country is None:
+                    data.loc[index,'Country_Region'] = "Unknown"
                 else:
-                    data.loc[index,'country'] = country
+                    data.loc[index,'Country_Region'] = country
+    print(data.head(26412))
                 
     df2 = key_generation(data, "Province_State", "Country_Region")
     df2["Incidence_Rate"] = missing_value_by_mean(df2, "Incidence_Rate")
@@ -266,7 +259,7 @@ def main():
 
     ###### IMPUTING AND CLEANING "TRAINING" DATA #####
     new_train = imputation(train)
-    new_train.to_csv('../results/cases_train_processed.csv')
+    new_train.to_csv('../results/cases_train_processed_new.csv')
 
     new_test = imputation(test)
     new_test.to_csv('../results/cases_test_processed.csv')

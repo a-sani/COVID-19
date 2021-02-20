@@ -6,6 +6,7 @@ import sys
 import math
 from geopy.geocoders import Nominatim
 
+# Note: Pre-processing (Data Cleaning, Imputation, and Transformation) takes over 50 minutes #
 
 def replace_missing_values(df):
     '''
@@ -106,25 +107,22 @@ def convert_time(df, time_column):
 
 
 def imputation(data): # Function to clean and imput the dataset
-    ### Fixing Age Attribute
+    ### Fixing Age Attribute ###
     #copy only the age and outcome attributes of original data
     temp = data["age"].dropna() #drop all NaN age values
     data['age'] = temp.apply(fixAge) #fix the ages
 
     age_mean = round(data["age"].mean())
     data["age"].fillna(float(age_mean), inplace = True)
-    print(data)
 
-    ### Replaces missing values in sex, date, source, and additional info
+    ### Replaces missing values in sex, date, source, and additional info ###
     data = replace_missing_values(data) 
 
 
-    ### Imputing Missing values in Province and Country attributes
+    ### Imputing Missing values in Province and Country attributes ###
     data = data[data["latitude"].notnull()]
 
-
-    for index, row in data.iterrows():
-        #print(row['province'], row['country'])
+    for index, row in data.iterrows(): # iterate through each row in the data
         if (pd.isnull(row['province']) or pd.isnull(row['country'])): #checks if province or country is Null
             province, country = imputing_province(row['latitude'],row['longitude']) #does imputation
             if (pd.isnull(row['province'])): #if its province that's null
@@ -141,20 +139,16 @@ def imputation(data): # Function to clean and imput the dataset
                     data.loc[index,'country'] = "Unknown"
                 else:
                     data.loc[index,'country'] = country
-    print(data.head(26412))
 
 
-    data = data.replace({'country':{"United States":"US"}})
-    data = key_generation(data, "province", "country")
+    data = data.replace({'country':{"United States":"US"}}) 
+    data = key_generation(data, "province", "country") # create key attribute (for join)
     dataset = convert_time(data, "date_confirmation")
 
     return dataset
 
 
-################################################################
-
 def missing_value_by_mean(df, column, key = "key"):
-    
     '''
     This function fills in the missing values by group mean using key as the group
     
@@ -165,12 +159,11 @@ def missing_value_by_mean(df, column, key = "key"):
     # https://stackoverflow.com/questions/19966018/pandas-filling-missing-values-by-mean-in-each-group
 
     '''
-    
     df[column] = df[column].fillna(df.groupby(key)[column].transform("mean"))
     return df[column]
 
+
 def missing_value_by_country_mean(df, column, key = "Country_Region"):
-    
     '''
     This function fills in the missing values by group mean using country as the group
     
@@ -179,15 +172,12 @@ def missing_value_by_country_mean(df, column, key = "Country_Region"):
     
     Reference:
     # https://stackoverflow.com/questions/19966018/pandas-filling-missing-values-by-mean-in-each-group
-
     '''
-    
     df[column] = df[column].fillna(df.groupby(key)[column].transform("mean"))
     return df[column]
 
 
 def aggregate(df):
-    
     '''
     This function aggregates groups by sums and means then perform column operations
     
@@ -198,7 +188,6 @@ def aggregate(df):
     https://stackoverflow.com/questions/48909110/python-pandas-mean-and-sum-groupby-on-different-columns-at-the-same-time
     # https://stackoverflow.com/questions/20461165/how-to-convert-index-of-a-pandas-dataframe-into-a-column
     '''
-    
     # aggregation of sums and means
     col_names = {'Lat':'latitude', 'Long_':'longitude','Confirmed':'confirmed_sum', 'Deaths':'death_sum', 'Recovered':'recovered_sum', 'Incidence_Rate':'incidence_rate_avg'}
     df = df.groupby('key').agg({'Lat':'mean', 'Long_':'mean', 'Confirmed':'sum', 'Deaths':'sum', 'Recovered':'sum', 'Incidence_Rate':'mean'}).rename(columns = col_names)
@@ -213,6 +202,7 @@ def aggregate(df):
     return df
 
 
+
 def transform(data):
 
     del data["Case-Fatality_Ratio"]
@@ -221,8 +211,7 @@ def transform(data):
     ### Only running the latitude and longitude that are not null
     data = data[data["Lat"].notnull()]
 
-    for index, row in data.iterrows():
-        #print(row['province'], row['country'])
+    for index, row in data.iterrows(): #iterate through each row in the data
         if (pd.isnull(row['Province_State']) or pd.isnull(row['Country_Region'])): #checks if province or country is Null
             province, country = imputing_province(row['Lat'],row['Long_']) #does imputation
             if (pd.isnull(row['Province_State'])): #if its province that's null
@@ -239,9 +228,8 @@ def transform(data):
                     data.loc[index,'Country_Region'] = "Unknown"
                 else:
                     data.loc[index,'Country_Region'] = country
-    print(data.head(26412))
                 
-    df2 = key_generation(data, "Province_State", "Country_Region")
+    df2 = key_generation(data, "Province_State", "Country_Region") # create key attribute (for join)
     df2["Incidence_Rate"] = missing_value_by_mean(df2, "Incidence_Rate")
     df2["Incidence_Rate"] = missing_value_by_country_mean(df2, "Incidence_Rate")
     df3 = aggregate(df2)
@@ -249,23 +237,23 @@ def transform(data):
     return df3
 
 
-
-
 def main():
-    # Reading the tree datasets in 
+    # READ THE DATASETS IN
     train = pd.read_csv('../data/cases_train.csv')
     test = pd.read_csv('../data/cases_test.csv')
     location = pd.read_csv('../data/location.csv')
 
-    ###### IMPUTING AND CLEANING "TRAINING" DATA #####
+    # IMPUTING AND CLEANING CASES DATASETS
     new_train = imputation(train)
-    new_train.to_csv('../results/cases_train_processed_new.csv')
+    new_train.to_csv('../results/cases_train_processed.csv') 
 
     new_test = imputation(test)
     new_test.to_csv('../results/cases_test_processed.csv')
 
+    # TRANSFORMING THE LOCATION DATASET
     new_location = transform(location)
     new_location.to_csv('../results/location_transformed.csv')
+
 
 
 if __name__ == "__main__":

@@ -11,6 +11,7 @@
 * `eda.ipynb` to run the visualizations of the data
 * `main.py` contains the preprocessing of the three datasets
 * `outlier.ipynb` contains our outlier detection functions
+* `join.py` used to join the test & training data with the location data
 
 
 ***4. The results folder includes all the processed and joined files***

@@ -3,9 +3,9 @@ import pandas as pd
 import numpy as np
 
 #read csv files
-train = pd.read_csv('../data/cases_train_processed.csv')
-test = pd.read_csv('../data/cases_test_processed.csv')
-location = pd.read_csv('../data/location_transformed.csv')
+train = pd.read_csv('../results/cases_train_processed.csv')
+test = pd.read_csv('../results/cases_test_processed.csv')
+location = pd.read_csv('../results/location_transformed.csv')
 
 #join the training and location datasets
 train_location_joined = pd.merge(train,location, on='name')

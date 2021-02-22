@@ -245,16 +245,32 @@ def main():
 
     # IMPUTING AND CLEANING CASES DATASETS
     new_train = imputation(train)
-    new_train.to_csv('../results/cases_train_processed.csv') 
+    #new_train.to_csv('../results/cases_train_processed.csv') 
 
     new_test = imputation(test)
-    new_test.to_csv('../results/cases_test_processed.csv')
+    #new_test.to_csv('../results/cases_test_processed.csv')
 
     # TRANSFORMING THE LOCATION DATASET
     new_location = transform(location)
     new_location.to_csv('../results/location_transformed.csv')
 
+    # JOIN USING LEFT JOIN 
+    #join the training and location datasets
+    train_location_joined = pd.merge(new_train,new_location, on='key', how = 'left')
+
+    #join the test and location datasets
+    test_location_joined = pd.merge(new_test,new_location, on='key', how = "left")
+
+    # drop unnamed columns
+    #train_location_joined = train_location_joined.drop(['Unnamed: 0_x', 'Unnamed: 0_y'], axis=1)
+    #test_location_joined = test_location_joined.drop(['Unnamed: 0_x', 'Unnamed: 0_y'], axis=1)
+
+    #write csv files
+    train_location_joined.to_csv('../results/cases_train_processed.csv', index=False)
+    test_location_joined.to_csv('../results/cases_test_processed.csv', index=False)
+
 
 
 if __name__ == "__main__":
     main()
+

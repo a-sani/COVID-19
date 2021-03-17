@@ -1,9 +1,0 @@
-matplotlib
-numpy
-re
-statistics
-pandas
-geopandas
-seaborn
-geopy
-math

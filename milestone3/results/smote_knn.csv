@@ -1,0 +1,4 @@
+param_n_neighbors,param_weights,param_metric,mean_test_f1_deceased,rank_test_f1_deceased,mean_test_recall_deceased,mean_test_overall_accuracy,mean_test_overall_recall
+9,distance,euclidean,0.6852734486509732,3,0.7142368754586086,0.7559410646387833,0.7559410646387833
+30,distance,euclidean,0.6963841372282573,1,0.7381595624041091,0.7619550897204991,0.7619550897204991
+50,distance,euclidean,0.6933919449275359,2,0.7343406043626175,0.7618049996664665,0.7618049996664665
